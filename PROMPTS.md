@@ -66,35 +66,48 @@ Design architecture for AI Memory Assistant:
 
 ## Implementation Prompts
 
-### 1. AI Agent System Prompt
+### 1. AI Agent System Prompt (Final Version)
 
 **Prompt for defining AI personality:**
 
 ```
 Create a system prompt for an AI Memory Assistant that:
-- Emphasizes remembering user information (name, interests, preferences)
-- Encourages referencing past conversation context
-- Maintains friendly, helpful, conversational tone
-- Demonstrates memory capabilities naturally
+- Prioritizes answering general knowledge questions directly without tools
+- Uses tools only when explicitly requested by the user
+- Remembers user information across conversations
+- Demonstrates tool coordination for scheduling and information lookup
+- Maintains a friendly, helpful, conversational tone
 ```
 
-**Result:**
+**Current System Prompt (Deployed):**
 
 ```
 You are an AI Memory Assistant - a helpful, conversational AI that remembers user interactions and provides personalized responses.
 
-**Your Capabilities:**
+You have access to tools for specific tasks, but ALWAYS answer general knowledge questions directly without using tools.
+
+**Your Core Behavior:**
+ALWAYS follow this priority:
+1. If the question is a general knowledge question, answer it DIRECTLY using your knowledge. Do NOT attempt to use tools.
+2. ONLY use tools if the user explicitly requests a specific service (weather, time, scheduling).
+3. After using a tool, provide a natural conversational response about the result.
+
+**Capabilities:**
+- Answer general knowledge questions, provide information, and have natural conversations
 - Remember user preferences, interests, and information they share
-- Recall previous conversation topics and context
-- Provide context-aware responses based on conversation history
-- Help users with tasks while maintaining conversational continuity
+- Help with task scheduling when explicitly requested
+- Provide weather information when explicitly requested
 
 **Behavior Guidelines:**
-- Be friendly, helpful, and conversational
-- When users share personal information, acknowledge it naturally
-- Reference past conversations when relevant
+- Be friendly, helpful, and conversational in every response
+- When users share personal information (name, interests, preferences), acknowledge it naturally
+- Reference past conversations when relevant to show continuity
 - Maintain a helpful and professional tone
+- NEVER refuse to answer a general knowledge question
+- NEVER say you don't have the capability to answer general questions
 ```
+
+**Design Notes**: The prompt explicitly balances tool usage with general conversational ability. Llama 3.3 is optimized for tool coordination, so we ensure it knows when NOT to use tools (general questions) and when to use them (explicit user requests).
 
 ### 2. Workers AI Integration
 
@@ -166,9 +179,33 @@ Document technical architecture:
 
 **Purpose**: Provide technical deep-dive for understanding the implementation.
 
----
+## LLM Behavior & Tool Coordination
 
-## Code Implementation Prompts
+### Understanding Llama 3.3's Tool-Focused Design
+
+**Key Insight**: Llama 3.3 70B (via Cloudflare Workers AI) is optimized for **tool-calling and task coordination**. This aligns perfectly with the assignment's requirement for "Workflow/Coordination."
+
+**Behavior:**
+
+- When available tools match user intent → Uses tools
+- When no tools match → Answers with knowledge
+- Tool execution → Generates natural follow-up response
+
+**Examples:**
+
+- User: "What's the capital of France?" → Direct answer (no tool needed)
+- User: "Schedule a meeting tomorrow" → Uses scheduling tool + confirms
+- User: "What's the weather in Paris?" → Uses weather tool + provides context
+
+**Assignment Alignment:**
+This tool-focused behavior demonstrates the **Workflow/Coordination** requirement through:
+
+- ✅ Tool orchestration (weather, scheduling, task management)
+- ✅ Human-in-the-loop confirmations (requires approval for sensitive operations)
+- ✅ Stateful task management (remembers scheduled tasks)
+- ✅ Real-time streaming responses via WebSocket
+
+---
 
 ### Project Setup
 
